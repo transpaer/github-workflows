@@ -35,11 +35,6 @@ jobs:
         id: versions
         run: |
           next="v$(cargo get workspace.package.version)"
-          echo "Next version: '$next'"
-          if [[ -z "$next" ]] then
-            echo "Failed to get the version"
-            exit 1
-          fi
           echo "next=$next" >> "$GITHUB_OUTPUT"
 
     outputs:

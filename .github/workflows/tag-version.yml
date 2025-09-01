@@ -32,8 +32,9 @@ jobs:
         id: versions
         run: |
           prev="$(git describe --tags --abbrev=0)"
-          echo "Prev version: '$prev"
-          if [[ -z "$prev" ]] then
+          next="${{ inputs.next_version }}"
+          echo "Versions: prev='$prev' next='$next'"
+          if [[ -z "$prev" ]] || [[ -z "$next" ]] then
             echo "Failed to get the version"
             exit 1
           fi
