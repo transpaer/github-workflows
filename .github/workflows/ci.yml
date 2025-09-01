@@ -30,6 +30,6 @@ jobs:
     needs: get
     uses: ./.github/workflows/tag-version.yml
     with:
-      next_version: 
+      next_version: ${{ needs.get.outputs.next_version }}
     secrets:
       gh_token: ${{ secrets.GITHUB_TOKEN }}
