@@ -1,0 +1,55 @@
+name: Tag if version bumped (Rust)
+
+on:
+  workflow_call:
+    secrets:
+      gh_token:
+        description: Github token
+        required: true
+
+jobs:
+
+  get:
+    name: Get current version
+    runs-on: ubuntu-latest
+    
+    # Pushed or merged to `main`
+    if: ${{ github.ref == 'refs/heads/main' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install cargo-get
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-get
+
+      - name: Toolchain info
+        run: |
+          cargo --version --verbose
+          rustc --version
+          cargo get --version
+
+      - name: Get versions
+        id: versions
+        run: |
+          next="v$(cargo get workspace.package.version)"
+          echo "Next version: '$next'"
+          if [[ -z "$next" ]] then
+            echo "Failed to get the version"
+            exit 1
+          fi
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      next_version: ${{ steps.versions.outputs.next }}
+
+  tag:
+    name: Tag
+    needs: get
+    uses: ./.github/workflows/tag-version.yml
+    with:
+      next_version: ${{ needs.get.outputs.next_version }}
+    secrets:
+      gh_token: ${{ secrets.gh_token }}
