@@ -1,0 +1,48 @@
+name: Tag if version bumped
+
+on:
+  workflow_call:
+    inputs:
+      next_version:
+        type: string
+        required: true
+        description: The version to bump to
+    secrets:
+      gh_token:
+        required: true
+        description: Github token
+
+jobs:
+
+  tag:
+    name: Tag if version bumped
+    runs-on: ubuntu-latest
+    
+    # Pushed or merged to `main`
+    if: ${{ github.ref == 'refs/heads/main' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Get prev version
+        id: versions
+        run: |
+          prev="$(git describe --tags --abbrev=0)"
+          echo "Prev version: '$prev"
+          if [[ -z "$prev" ]] then
+            echo "Failed to get the version"
+            exit 1
+          fi
+          echo "prev=$prev" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag if version bumped
+        if: steps.versions.outputs.prev != inputs.next_version
+        env:
+          GH_TOKEN: ${{ secrets.gh_token }}
+        run: |
+          gh release create ${{ inputs.next_version }} \
+              --notes "Release ${{ inputs.next_version }}"

@@ -1,0 +1,47 @@
+name: Tag if version bumped (Dart)
+
+on:
+  workflow_call:
+    inputs:
+      pubspec_path:
+        required: false
+        type: string
+    secrets:
+      gh_token:
+        required: true
+
+jobs:
+
+  get:
+    name: Get current version
+    runs-on: ubuntu-latest
+    
+    # Pushed or merged to `main`
+    if: ${{ github.ref == 'refs/heads/main' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get versions
+        id: versions
+        run: |
+          next="v$(yq eval '.version' ${{ inputs.pubspec_path }})"
+          echo "Next version: '$next'"
+          if [[ -z "$next" ]] then
+            echo "Failed to get the version"
+            exit 1
+          fi
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+
+    outputs:
+      next_version: ${{ steps.versions.outputs.next }}
+
+  tag:
+    name: Tag
+    needs: get
+    uses: ./.github/workflows/tag-version.yml
+    with:
+      next_version: ${{ needs.get.outputs.next_version }}
+    secrets:
+      gh_token: ${{ secrets.gh_token }}
