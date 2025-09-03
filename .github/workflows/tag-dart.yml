@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       pubspec_path:
-        required: false
+        required: true
         type: string
     secrets:
       gh_token:
